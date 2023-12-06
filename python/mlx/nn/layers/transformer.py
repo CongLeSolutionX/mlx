@@ -89,10 +89,7 @@ class MultiHeadAttention(Module):
     def create_additive_causal_mask(N: int, dtype: mx.Dtype = mx.float32):
         indices = mx.arange(N)
         mask = indices[:, None] < indices[None]
-        # usually inf but 1e9 is as good and softmax(full(1e9)) != nan
-        # TODO: Should replace this with finfo(dtype).min
-        mask = mask.astype(dtype) * -1e9
-        return mask
+        return mask.astype(dtype) * -1e9
 
 
 class TransformerEncoderLayer(Module):
@@ -126,7 +123,7 @@ class TransformerEncoder(Module):
         super().__init__()
         self.layers = [
             TransformerEncoderLayer(dims, num_heads, mlp_dims)
-            for i in range(num_layers)
+            for _ in range(num_layers)
         ]
         self.ln = LayerNorm(dims)
 
