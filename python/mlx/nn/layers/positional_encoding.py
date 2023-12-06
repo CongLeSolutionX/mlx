@@ -37,12 +37,11 @@ class RoPE(Module):
         rx1 = x1 * costheta - x2 * sintheta
         rx2 = x1 * sintheta + x2 * costheta
 
-        if self.dims < x.shape[-1]:
-            rx = mx.concatenate([rx1, rx2, x[..., self.dims :]], axis=-1)
-        else:
-            rx = mx.concatenate([rx1, rx2], axis=-1)
-
-        return rx
+        return (
+            mx.concatenate([rx1, rx2, x[..., self.dims :]], axis=-1)
+            if self.dims < x.shape[-1]
+            else mx.concatenate([rx1, rx2], axis=-1)
+        )
 
     def _compute_traditional_rope(self, costheta, sintheta, x):
         x1 = x[..., ::2]
@@ -55,9 +54,7 @@ class RoPE(Module):
                 "RoPE doesn't implement partial traditional application"
             )
 
-        rx = mx.concatenate([rx1[..., None], rx2[..., None]], axis=-1)
-
-        return rx
+        return mx.concatenate([rx1[..., None], rx2[..., None]], axis=-1)
 
     def __call__(self, x, offset: int = 0):
         shape = x.shape
@@ -78,7 +75,7 @@ class RoPE(Module):
     def create_cos_sin_theta(
         N: int, D: int, offset: int = 0, base: float = 10000, dtype=mx.float32
     ):
-        D = D // 2
+        D //= 2
         positions = mx.arange(offset, N, dtype=dtype)
         freqs = mx.exp(-mx.arange(0.0, D, dtype=dtype) * (math.log(base) / D))
         theta = mx.reshape(positions, (-1, 1)) * mx.reshape(freqs, (1, -1))
